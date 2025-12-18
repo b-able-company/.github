@@ -1,159 +1,140 @@
-좋은 판단이야.
-이건 개인 노하우가 아니라 **팀 전체의 개발 생산성을 고정시키는 “운영 방식”**이라 공유하는 게 맞아.
+# AI 개발 플로우
 
-아래는 **팀 공용 문서로 바로 공유 가능한 정리본**이야.
-(노션 / 슬랙 / 위키 어디에 올려도 되는 톤으로 썼어)
+## 4단계 규칙
 
----
+```
+ChatGPT → Claude → Codex → Claude Code
+헌법제정   법률작성   계획수립   실행
+```
 
-# ShortDeal AI 기반 개발 플로우 (팀 공용)
+### 각자 역할
 
-## 목적
-
-* AI를 여러 개 쓰더라도 **설계·구현·리뷰가 서로 어긋나지 않게** 한다.
-* “누가 무엇을 정의하는지”를 명확히 해서 **세계관 붕괴를 방지**한다.
-* MVP 속도를 유지하면서도 **리버트/땜질 비용을 최소화**한다.
-
----
-
-## 전체 개발 플로우 요약
-
-### 1️⃣ ChatGPT – 기획 & 헌법 정의
-
-**산출물:** `AGENTS.md`
-
-* 프로젝트의 **최상위 규칙(헌법)** 정의
-* 포함 내용:
-
-  * 기술 스택 (Django, DRF, JWT, Postgres 등)
-  * API 규칙 (`/api/v1`, 응답 포맷)
-  * DB 원칙 (UTC, soft delete, ArrayField 등)
-  * 핵심 비즈니스 룰 (onboarding gating, booth 자동 생성 등)
-* **AGENTS.md는 모든 문서와 코드보다 우선함**
-
-👉 어떤 AI든, 어떤 사람이든 **AGENTS.md를 어기면 잘못된 작업**
+| 도구 | 만드는 것 | 금지 |
+|------|----------|------|
+| ChatGPT | `AGENTS.md` (기술헌법) | 모호함 |
+| Claude | Spec 문서들 (설계서) | AGENTS 위반 |
+| Codex | `Plan.md` (구현계획) | Spec 재해석 |
+| Claude Code | 코드 | 독자판단 |
 
 ---
 
-### 2️⃣ Claude – 상세 명세서 작성
+## AGENTS.md 필수 항목
 
-**산출물:**
-
-* `ia.md` (플로우/화면 관점)
-* `db-schema.md` (모델/관계/제약)
-* `api-spec.md` (엔드포인트 계약)
-* `func-spec.md` (기능 단위 요구사항)
-* `permissions.md` (권한 규칙)
-
-**원칙**
-
-* 모든 명세는 **AGENTS.md를 절대 기준**으로 작성
-* AGENTS와 충돌하는 판단은 하면 안 됨
-* 모호한 부분은 “Human decision needed”로 남김
-
-👉 이 단계에서 설계가 틀어지면 이후 단계가 전부 오염됨
+```markdown
+1. 기술스택 (버전까지)
+2. API 규칙 (URL, 응답포맷)
+3. DB 원칙 (PK타입, UTC, soft delete)
+4. 인증방식 (JWT/Session)
+5. 핵심 비즈니스 룰
+```
 
 ---
 
-### 3️⃣ Codex – 명세 기반 구현 계획 수립
+## Spec 문서 5종
 
-**산출물:** `Plan.md`
-
-Plan.md는 “설계 문서”가 아니라 **구현 실행 계획서**임.
-
-반드시 포함해야 할 구성:
-
-1. **Spec Consistency Report**
-
-   * AGENTS.md vs 각 명세서 충돌/누락 체크
-   * 충돌 항목 + 사람 판단 필요 항목 명시
-
-2. **구현 범위**
-
-   * 이번 스프린트에서 다룰 기능 ID (P0 한정)
-
-3. **구현 순서**
-
-   * Models → Serializers → Views → URLs → Tests
-
-4. **파일 단위 작업 목록**
-
-   * 어떤 파일을 만들고/수정하는지 명확히
-
-5. **Edge Case 체크리스트**
-
-   * 권한, 상태, 중복, race condition 등
-
-👉 **Plan.md는 구현의 기준 문서이며, 이 단계에서 잠금(lock)됨**
+1. **ia.md** - 화면/플로우
+2. **db-schema.md** - DB 설계
+3. **api-spec.md** - API 계약
+4. **func-spec.md** - 기능 요구사항
+5. **permissions.md** - 권한 규칙
 
 ---
 
-### 4️⃣ Claude Code – Plan.md를 그대로 구현
+## Plan.md 필수 구조
 
-**역할:** 설계자 ❌ / 시공자 ⭕️
-
-**규칙**
-
-* Plan.md에 없는 기능 추가 금지
-* AGENTS.md / 명세를 재해석하거나 변경 금지
-* 각 코드 파일 상단에:
-
-  * 어떤 spec/기능 ID를 구현하는지 주석으로 명시
-
-**구현 단위**
-
-* 가능하면 Plan 단계별로 커밋/PR 분리
-
-👉 Claude Code는 **“생각하지 않고 정확히 따르는 역할”**
+```markdown
+1. Spec 충돌 체크
+2. 구현 범위 (P0만)
+3. 구현 순서
+4. 파일별 작업 목록 (구체적으로)
+5. Edge Case 체크리스트
+```
 
 ---
 
-## 중요한 운영 원칙 (팀 공통)
+## 절대 규칙
 
-### 🔒 단일 진실의 원천 (Single Source of Truth)
+### 우선순위
+```
+AGENTS.md > Spec > Plan > Code
 
-우선순위는 항상 아래 순서:
+충돌 시 → 항상 위쪽이 맞다
+```
 
-1. `AGENTS.md` (헌법)
-2. Spec 문서들 (api / db / func / permissions / ia)
-3. `Plan.md`
-4. 코드
+### 리버트 기준
+- ✅ 인증/API포맷/핵심모델이 AGENTS와 다를 때
+- ❌ 함수 로직이 복잡할 때 (리팩토링)
 
-리뷰 의견이나 AI 제안이 위 문서들과 충돌하면 **문서가 맞다**
-
----
-
-### 🔁 리버트 기준
-
-아래 중 하나라도 해당하면 **초기 단계에서 리셋 권장**:
-
-* 인증/온보딩/부스 같은 **기초 구조가 AGENTS와 다를 때**
-* API-first인데 HTML/세션 기반 로직이 섞였을 때
-* User/Booth 모델이 스펙과 구조적으로 어긋났을 때
-
-👉 기초가 어긋난 상태에서 기능을 쌓는 게 가장 비싼 선택
+### 코드 작성 시
+```python
+# 파일 상단 필수
+# Spec ref: db-schema.md#User
+# Plan ref: Plan.md#Phase1
+```
 
 ---
 
-### 🧩 FE/BE 분리 원칙
+## 프롬프트 템플릿
 
-* 백엔드: Claude Code (API-only, JSON-only)
-* 프론트엔드: Codex + **별도 리포**
-* FE/BE는 **api-spec.md라는 계약서로만 연결**
+### ChatGPT
+```
+"Django+DRF, JWT, PostgreSQL 기반 [프로젝트명]
+AGENTS.md 형식으로 기술헌법 작성"
+```
+
+### Claude
+```
+"AGENTS.md 기반으로 [기능명]의
+ia/db/api/func/permissions 명세 작성"
+```
+
+### Codex
+```
+"AGENTS + Spec 검토해서 [기능명]
+Plan.md 작성 (Spec 충돌체크 포함)"
+```
+
+### Claude Code
+```
+"Plan.md Phase [N] 구현
+Spec 참조 주석 포함"
+```
 
 ---
 
-## 한 줄 요약 (팀 공유용)
+## 리뷰 체크 (10초)
 
-> **AGENTS.md로 헌법을 정하고 → 명세를 만들고 → Plan으로 잠근 뒤 → AI는 그대로 구현만 한다.
-> 설계를 바꾸는 AI는 없고, 따르는 AI만 있다.**
+```
+□ AGENTS 위반?
+□ Spec과 다름?
+□ Plan 벗어남?
+□ Spec 주석 있음?
+```
 
 ---
 
-원하면 다음도 만들어줄 수 있어:
+## 긴급상황
 
-* 📄 **팀 온보딩용 1페이지 요약본**
-* 🧠 **“이 단계에서 이 AI를 쓰는 이유” 설명 슬라이드**
-* 🧪 **리뷰/QA 체크리스트 (spec 기준)**
+**버그:** Spec 위반? → 코드 수정 / Spec 틀림? → 둘 다 수정  
+**엉뚱한 구현:** 기초오류? → 리버트 / 디테일? → 수정
 
-어디에 공유할지(노션/슬랙/위키) 알려주면 거기에 맞게 포맷도 맞춰줄게.
+---
+
+## 폴더 구조
+
+```
+docs/
+├── AGENTS.md
+├── specs/
+│   ├── ia.md
+│   ├── db-schema.md
+│   ├── api-spec.md
+│   ├── func-spec.md
+│   └── permissions.md
+└── plans/
+    └── sprint-N.md
+```
+
+---
+
+**핵심:** 문서가 코드를 이끈다. AI는 생각하지 않고 따른다.
